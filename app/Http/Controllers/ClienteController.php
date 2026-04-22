@@ -8,19 +8,17 @@ use Inertia\Inertia;
 class ClienteController extends Controller
 {
     public function index()
-{
-    // Criamos um cliente manual para testar a ponte Laravel -> React
-    $clientes = [
-        [
-            'id' => 1,
-            'nome_completo' => 'Teste Manual de Conexão',
-            'telefone' => '69 9999-9999',
-            'nucleo' => 'Núcleo de Teste'
-        ]
-    ];
+    {
+        // Usando apenas Cliente::all() já que ele foi importado na linha 5
+        $clientes = Cliente::all();
 
-    return Inertia::render('Clientes/Index', [
-        'clientes' => $clientes
-    ]);
-}
+        return Inertia::render('Clientes/Index', [
+            'clientes' => $clientes
+        ]);
+    }
+    public function create()
+    {
+        // Por enquanto, apenas para não dar erro
+        return Inertia::render('Clientes/Create');
+    }
 }

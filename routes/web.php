@@ -5,7 +5,12 @@ use App\Http\Controllers\ClienteController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+
+// Rota para Listar Clientes
 Route::get('/clientes', [ClienteController::class, 'index'])->name('clientes.index');
+
+// Rota para a Tela de Novo Cliente
+Route::get('/clientes/novo', [ClienteController::class, 'create'])->name('clientes.create');
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -26,4 +31,4 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
