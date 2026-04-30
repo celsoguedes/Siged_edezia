@@ -12,6 +12,9 @@ Route::get('/clientes', [ClienteController::class, 'index'])->name('clientes.ind
 // Rota para a Tela de Novo Cliente
 Route::get('/clientes/novo', [ClienteController::class, 'create'])->name('clientes.create');
 
+Route::post('/clientes', [ClienteController::class, 'store'])->name('clientes.store');
+
+
 Route::get('/', function () {
     return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),
