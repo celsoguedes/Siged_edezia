@@ -65,4 +65,29 @@ class ClienteController extends Controller
     Cliente::create($validated);
     return redirect()->route('clientes.index')->with('success', 'Cliente cadastrado!');
 }
+
+// Abre a tela de edição com os dados atuais do cliente
+public function edit(Cliente $cliente)
+{
+    return inertia('Clientes/Edit', [
+        'cliente' => $cliente
+    ]);
+}
+
+// Recebe os dados alterados e salva no banco
+public function update(Request $request, Cliente $cliente)
+{
+    // Usamos a mesma validação que você já tem no Store
+    $validated = $request->validate([
+        'nome_completo' => 'required|string|max:255',
+        'cpf' => 'required|string|unique:clientes,cpf,' . $cliente->id,
+        'sexo' => 'required|in:F,M',
+        // Adicione as outras validações se desejar,
+        // ou mantenha simples como no create
+    ]);
+
+    $cliente->update($request->all());
+
+    return redirect()->route('clientes.index')->with('success', 'Cadastro atualizado!');
+}
 }
