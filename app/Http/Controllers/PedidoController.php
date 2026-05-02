@@ -28,7 +28,7 @@ class PedidoController extends Controller
             ]),
             'produtos' => Produto::all(['id', 'nome', 'preco_base']),
             'opcoes_tecidos' => ['Brim', 'Linho Panamá', 'Elanca', 'Gabardine Focus', 'Gabardine Faveiro'],
-            'opcoes_tamanhos' => ['P', 'M', 'G', 'GG', 'XG'] // Garante o envio dos tamanhos[cite: 1]
+            'opcoes_tamanhos' => ['P', 'M', 'G', 'GG', 'XG']
         ]);
     }
 
@@ -63,7 +63,7 @@ class PedidoController extends Controller
             'status' => 'Pendente',
         ]);
 
-        $dadosItem = [
+        PedidoItem::create([
             'pedido_id' => $pedido->id,
             'produto_id' => $validated['produto_id'],
             'quantidade' => $validated['quantidade'],
@@ -71,7 +71,7 @@ class PedidoController extends Controller
             'tipo_ajuste' => $validated['tipo_ajuste'],
             'tamanho_padrao' => $request->tamanho_padrao,
             'tecido' => $validated['tecido'],
-            'observacoes_item' => $validated['observacoes_item'], // Salva as observações[cite: 1]
+            'observacoes_item' => $validated['observacoes_item'],
             'medida_pescoco' => $request->medida_pescoco,
             'medida_ombro_ombro' => $request->medida_ombro_ombro,
             'medida_punho' => $request->medida_punho,
@@ -81,9 +81,7 @@ class PedidoController extends Controller
             'medida_coxa' => $request->medida_coxa,
             'medida_joelho' => $request->medida_joelho,
             'medida_comprimento_total' => $request->medida_comprimento_total,
-        ];
-
-        PedidoItem::create($dadosItem);
+        ]);
 
         return redirect()->route('pedidos.index')->with('success', 'Pedido gerado!');
     }
@@ -92,5 +90,19 @@ class PedidoController extends Controller
     {
         $pedido->load(['cliente', 'itens.produto']);
         return Inertia::render('Pedidos/Show', ['pedido' => $pedido]);
+    }
+
+    public function updateStatus(Request $request, Pedido $pedido)
+    {
+        $validated = $request->validate([
+            'status' => 'required|in:Pendente,Em Produção,Finalizado,Cancelado',
+        ]);
+
+        // Persistência direta no banco de dados[cite: 7, 8]
+        $pedido->update([
+            'status' => $validated['status']
+        ]);
+
+        return back();
     }
 }
