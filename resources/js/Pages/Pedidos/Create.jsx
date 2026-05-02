@@ -1,29 +1,57 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Head, useForm } from '@inertiajs/react';
 
 export default function Create({ clientes, produtos, opcoes_tecidos, opcoes_tamanhos }) {
     const { data, setData, post, processing, errors } = useForm({
         cliente_id: '',
         produto_id: '',
-        tipo_ajuste: 'Sob Medida',
+        tipo_ajuste: 'Sob Medida', // Estado inicial
         tamanho_padrao: '',
         tecido: '',
         quantidade: 1,
-        observacoes_item: ''
+        observacoes_item: '',
+        // Medidas individuais consistentes com PedidoController e Banco de Dados[cite: 1, 3]
+        medida_pescoco: '',
+        medida_ombro_ombro: '',
+        medida_punho: '',
+        medida_torax: '',
+        medida_cintura: '',
+        medida_quadril: '',
+        medida_coxa: '',
+        medida_joelho: '',
+        medida_comprimento_total: '',
     });
+
+    const handleClienteChange = (e) => {
+        const id = e.target.value;
+        const cliente = clientes.find(c => c.id == id);
+
+        if (cliente) {
+            setData(prev => ({
+                ...prev,
+                cliente_id: id,
+                medida_pescoco: cliente.medida_pescoco || '',
+                medida_ombro_ombro: cliente.medida_ombro_ombro || '',
+                medida_punho: cliente.medida_punho || '',
+                medida_torax: cliente.medida_torax || '',
+                medida_cintura: cliente.medida_cintura || '',
+                medida_quadril: cliente.medida_quadril || '',
+                medida_coxa: cliente.medida_coxa || '',
+                medida_joelho: cliente.medida_joelho || '',
+                medida_comprimento_total: cliente.medida_comprimento_total || '',
+            }));
+        } else {
+            setData('cliente_id', id);
+        }
+    };
 
     const submit = (e) => {
         e.preventDefault();
         post(route('pedidos.store'));
     };
 
-    // Estilos para os botões de seleção (Cards)
-    const cardBase = "flex-1 p-4 border-2 rounded-xl text-center transition-all cursor-pointer font-bold uppercase text-xs";
-    const cardActive = "border-indigo-600 bg-indigo-50 text-indigo-700 shadow-md";
-    const cardInactive = "border-gray-100 bg-white text-gray-400 hover:border-gray-200";
-
     return (
-        <div className="bg-gray-50 min-h-screen p-6 md:p-12 font-sans">
+        <div className="bg-gray-50 min-h-screen p-8 font-sans">
             <Head title="Novo Pedido - Edézia Design" />
 
             <div className="max-w-4xl mx-auto">
@@ -36,12 +64,13 @@ export default function Create({ clientes, produtos, opcoes_tecidos, opcoes_tama
                             <label className="block text-[10px] font-black uppercase text-gray-400 mb-2">Cliente</label>
                             <select
                                 value={data.cliente_id}
-                                onChange={e => setData('cliente_id', e.target.value)}
+                                onChange={handleClienteChange}
                                 className="w-full border-gray-200 rounded-lg text-sm"
                             >
                                 <option value="">Selecione o Cliente...</option>
                                 {clientes.map(c => <option key={c.id} value={c.id}>{c.nome_completo}</option>)}
                             </select>
+                            {errors.cliente_id && <div className="text-red-500 text-xs mt-1">{errors.cliente_id}</div>}
                         </div>
 
                         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
@@ -52,79 +81,109 @@ export default function Create({ clientes, produtos, opcoes_tecidos, opcoes_tama
                                 className="w-full border-gray-200 rounded-lg text-sm"
                             >
                                 <option value="">Selecione o Produto...</option>
-                                {produtos.map(p => <option key={p.id} value={p.id}>{p.nome} - R$ {p.preco_base}</option>)}
+                                {produtos.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
                             </select>
+                            {errors.produto_id && <div className="text-red-500 text-xs mt-1">{errors.produto_id}</div>}
                         </div>
                     </div>
 
-                    {/* SELEÇÃO DE TECIDO (LISTA COM CLIQUE) */}
+                    {/* SELEÇÃO DE TECIDO */}
                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                        <label className="block text-[10px] font-black uppercase text-gray-400 mb-4 tracking-[0.1em]">Escolha o Tecido</label>
+                        <label className="block text-[10px] font-black uppercase text-gray-400 mb-4 tracking-widest">Escolha o Tecido</label>
                         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                             {opcoes_tecidos.map(tecido => (
-                                <div
+                                <button
                                     key={tecido}
+                                    type="button"
                                     onClick={() => setData('tecido', tecido)}
-                                    className={`${cardBase} ${data.tecido === tecido ? cardActive : cardInactive}`}
+                                    className={`p-3 rounded-xl text-center font-bold uppercase text-[10px] transition-all border-2 ${
+                                        data.tecido === tecido
+                                        ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                                        : 'border-gray-50 bg-white text-gray-400'
+                                    }`}
                                 >
                                     {tecido}
-                                </div>
+                                </button>
                             ))}
                         </div>
                     </div>
 
-                    {/* TIPO DE AJUSTE E TAMANHO */}
+                    {/* TIPO DE AJUSTE E TAMANHO PADRÃO */}
                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                        <label className="block text-[10px] font-black uppercase text-gray-400 mb-4 tracking-[0.1em]">Ajuste e Tamanho</label>
+                        <label className="block text-[10px] font-black uppercase text-gray-400 mb-4 tracking-widest">Ajuste e Tamanho</label>
 
                         <div className="flex gap-4 mb-6">
                             <button
                                 type="button"
                                 onClick={() => setData('tipo_ajuste', 'Sob Medida')}
-                                className={`flex-1 py-3 rounded-lg font-bold text-sm transition-all ${data.tipo_ajuste === 'Sob Medida' ? 'bg-gray-800 text-white shadow-lg' : 'bg-gray-100 text-gray-400'}`}
+                                className={`flex-1 py-3 rounded-lg font-bold text-sm transition-all ${
+                                    data.tipo_ajuste === 'Sob Medida'
+                                    ? 'bg-gray-800 text-white shadow-lg'
+                                    : 'bg-gray-100 text-gray-400'
+                                }`}
                             >
                                 Sob Medida
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setData('tipo_ajuste', 'Padrão')}
-                                className={`flex-1 py-3 rounded-lg font-bold text-sm transition-all ${data.tipo_ajuste === 'Padrão' ? 'bg-gray-800 text-white shadow-lg' : 'bg-gray-100 text-gray-400'}`}
+                                className={`flex-1 py-3 rounded-lg font-bold text-sm transition-all ${
+                                    data.tipo_ajuste === 'Padrão'
+                                    ? 'bg-gray-800 text-white shadow-lg'
+                                    : 'bg-gray-100 text-gray-400'
+                                }`}
                             >
                                 Tamanho Padrão
                             </button>
                         </div>
 
+                        {/* BLOCO CONDICIONAL PARA TAMANHO PADRÃO */}
                         {data.tipo_ajuste === 'Padrão' && (
-                            <div className="flex justify-between gap-2 animate-in fade-in duration-300">
-                                {opcoes_tamanhos.map(tam => (
-                                    <div
-                                        key={tam}
-                                        onClick={() => setData('tamanho_padrao', tam)}
-                                        className={`w-12 h-12 flex items-center justify-center rounded-full border-2 font-black cursor-pointer transition-all ${data.tamanho_padrao === tam ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-gray-100 text-gray-300 hover:border-gray-200'}`}
-                                    >
-                                        {tam}
-                                    </div>
-                                ))}
+                            <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 mt-4">
+                                <label className="block text-[10px] font-black uppercase text-gray-500 mb-2">Selecione o Tamanho (P ao XG)</label>
+                                <select
+                                    value={data.tamanho_padrao}
+                                    onChange={e => setData('tamanho_padrao', e.target.value)}
+                                    className="w-full border-gray-200 rounded-lg text-sm"
+                                >
+                                    <option value="">Selecione o Tamanho...</option>
+                                    {opcoes_tamanhos && opcoes_tamanhos.map(tam => (
+                                        <option key={tam} value={tam}>{tam}</option>
+                                    ))}
+                                </select>
+                                {errors.tamanho_padrao && <div className="text-red-500 text-xs mt-1">{errors.tamanho_padrao}</div>}
                             </div>
                         )}
 
                         {data.tipo_ajuste === 'Sob Medida' && (
                             <div className="p-4 bg-indigo-50 rounded-xl border border-indigo-100 text-indigo-700 text-xs font-medium italic">
-                                ✨ O sistema utilizará as medidas cadastradas no perfil do cliente selecionado.
+                                ✨ O sistema utilizará as medidas individuais do cliente selecionado.
                             </div>
                         )}
                     </div>
 
-                    {/* OBSERVAÇÕES E BOTÃO FINAL */}
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                        <label className="block text-[10px] font-black uppercase text-gray-400 mb-2">Observações do Item</label>
-                        <textarea
-                            rows="3"
-                            value={data.observacoes_item}
-                            onChange={e => setData('observacoes_item', e.target.value)}
-                            className="w-full border-gray-200 rounded-lg text-sm"
-                            placeholder="Ex: Bordar nome no peito esquerdo..."
-                        />
+                    {/* QUANTIDADE E OBSERVAÇÕES */}
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="md:col-span-1">
+                            <label className="block text-[10px] font-black uppercase text-gray-400 mb-2">Quantidade</label>
+                            <input
+                                type="number"
+                                value={data.quantidade}
+                                onChange={e => setData('quantidade', e.target.value)}
+                                className="w-full border-gray-200 rounded-lg text-sm"
+                                min="1"
+                            />
+                        </div>
+                        <div className="md:col-span-2">
+                            <label className="block text-[10px] font-black uppercase text-gray-400 mb-2">Observações do Item</label>
+                            <textarea
+                                value={data.observacoes_item}
+                                onChange={e => setData('observacoes_item', e.target.value)}
+                                className="w-full border-gray-200 rounded-lg text-sm"
+                                rows="2"
+                                placeholder="Algum detalhe específico para esta peça?"
+                            />
+                        </div>
                     </div>
 
                     <button

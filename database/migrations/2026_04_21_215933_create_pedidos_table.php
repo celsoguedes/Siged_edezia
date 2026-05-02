@@ -14,18 +14,16 @@ return new class extends Migration
     Schema::create('pedidos', function (Blueprint $table) {
         $table->id();
         $table->foreignId('cliente_id')->constrained('clientes');
-        $table->date('data_pedido');
-        $table->date('previsao_entrega'); // Base para o alerta de 2 dias
+        $table->dateTime('data_pedido');
 
-        // Fluxo de Status: Aceito, Em Produção, Fabricado, Entregue [cite: 58]
-        $table->enum('status', ['Aceito', 'Em Produção', 'Fabricado', 'Entregue'])->default('Aceito');
+        // Adicione ->nullable() nestes campos:
+        $table->date('previsao_entrega')->nullable();
+        $table->string('forma_pagamento')->nullable();
+        $table->decimal('valor_pago', 10, 2)->default(0)->nullable();
+        $table->text('observacoes_gerais')->nullable();
 
-        // Financeiro do Pedido [cite: 60, 61, 62, 63]
-        $table->decimal('valor_total', 10, 2)->default(0);
-        $table->decimal('valor_frete', 8, 2)->default(0);
-        $table->string('forma_pagamento'); // À Vista, 50/50, Parcelado...
-
-        $table->text('observacoes')->nullable();
+        $table->decimal('valor_total', 10, 2);
+        $table->enum('status', ['Pendente', 'Em Produção', 'Finalizado', 'Cancelado'])->default('Pendente');
         $table->timestamps();
     });
 }

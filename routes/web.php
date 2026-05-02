@@ -38,7 +38,7 @@ Route::middleware('auth')->group(function () {
     // ADICIONE ESTA LINHA ABAIXO:
     Route::resource('produtos', ProdutoController::class);
     Route::resource('pedidos', PedidoController::class);
-
+    Route::patch('/pedidos/{pedido}/status', [PedidoController::class, 'updateStatus'])->name('pedidos.updateStatus');
 });
 
 require __DIR__ . '/auth.php';
