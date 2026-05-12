@@ -18,5 +18,6 @@ class Produto extends Model
         'quantidade_estoque', // Adicionado
         'descricao',
         'imagem',
+        'total_amount',
     ];
 }
