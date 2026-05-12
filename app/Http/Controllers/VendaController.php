@@ -2,85 +2,79 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Produto;
 use App\Models\Venda;
 use App\Models\ItemVenda;
+use App\Models\Produto;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class VendaController extends Controller
 {
-    /**
-     * Tela de Histórico de Vendas (Tópico 3)
-     */
     public function index(Request $request)
-{
-    // Captura os filtros da URL
-    $buscaNome = $request->input('nome');
-    $dataInicio = $request->input('data_inicio');
-    $dataFim = $request->input('data_fim');
+    {
+        // 1. Captura todos os filtros da URL
+        $nome = $request->input('nome');
+        $dataInicio = $request->input('data_inicio');
+        $dataFim = $request->input('data_fim');
 
-    // Query base com os relacionamentos
-    $query = Venda::with('itens.produto');
+        $query = Venda::with(['itens.produto', 'cliente']);
 
-    // Filtro por Nome do Produto (dentro da relação de itens)
-    if ($buscaNome) {
-        $query->whereHas('itens.produto', function($q) use ($buscaNome) {
-            $q->where('nome', 'like', '%' . $buscaNome . '%');
-        });
+        // 2. Filtro por nome do produto
+        if ($nome) {
+            $query->whereHas('itens.produto', function ($q) use ($nome) {
+                $q->where('nome', 'like', "%{$nome}%");
+            });
+        }
+
+        // 3. Filtro por Período (A lógica que estava faltando)
+        if ($dataInicio && $dataFim) {
+            // Usamos whereBetween para pegar o intervalo exato
+            $query->whereBetween('sale_date', [$dataInicio . ' 00:00:00', $dataFim . ' 23:59:59']);
+        }
+
+        $vendas = $query->orderBy('sale_date', 'desc')->get();
+
+        $estatisticas = [
+            'quantidade' => $vendas->count(),
+            'totalFiltrado' => number_format($vendas->sum('total_amount'), 2, ',', '.')
+        ];
+
+        return Inertia::render('Vendas/Historico', [
+            'vendas' => $vendas,
+            // Enviamos os filtros de volta para manter os campos preenchidos na tela
+            'filtros' => $request->only(['nome', 'data_inicio', 'data_fim']),
+            'estatisticas' => $estatisticas
+        ]);
     }
 
-    // Filtro por Intervalo de Datas
-    if ($dataInicio && $dataFim) {
-        $query->whereBetween('sale_date', [$dataInicio, $dataFim]);
-    }
-
-    $vendas = $query->orderBy('sale_date', 'desc')->get();
-
-    // Estatísticas baseadas no resultado filtrado
-    $totalFiltrado = $vendas->sum('total_amount');
-
-    return Inertia::render('Vendas/Historico', [
-        'vendas' => $vendas,
-        'filtros' => $request->only(['nome', 'data_inicio', 'data_fim']),
-        'estatisticas' => [
-            'totalFiltrado' => number_format($totalFiltrado, 2, ',', '.'),
-            'quantidade' => $vendas->count()
-        ]
-    ]);
-}
-
-    /**
-     * Finalizar Venda (Tópico 2 - Já funcionando)
-     */
     public function store(Request $request)
     {
         $request->validate([
             'itens' => 'required|array',
-            'total' => 'required|numeric'
+            'total' => 'required|numeric',
+            'cliente_id' => 'nullable|exists:clientes,id',
         ]);
 
         return DB::transaction(function () use ($request) {
             $venda = Venda::create([
                 'total_amount' => $request->total,
                 'sale_date'    => now(),
+                'cliente_id'   => $request->cliente_id,
             ]);
 
             foreach ($request->itens as $item) {
-                $produto = Produto::findOrFail($item['id']);
-
                 ItemVenda::create([
                     'sale_id'    => $venda->id,
-                    'produto_id' => $produto->id,
+                    'produto_id' => $item['id'],
                     'quantity'   => $item['qtd'],
                     'unit_price' => $item['preco_venda'],
                 ]);
 
-                $produto->decrement('quantidade_estoque', $item['qtd']);
+                Produto::where('id', $item['id'])->decrement('quantidade_estoque', $item['qtd']);
             }
 
-            return redirect()->back()->with('success', 'Venda realizada!');
+            return redirect()->route('produtos.index')->with('success', 'Venda realizada!');
         });
     }
 }

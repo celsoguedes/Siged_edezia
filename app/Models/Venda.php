@@ -9,14 +9,19 @@ class Venda extends Model
 {
     use HasFactory;
 
-    protected $table = 'sales'; // Nome da tabela que criamos na migration
+    protected $table = 'sales';
 
     protected $fillable = [
         'total_amount',
         'sale_date',
+        'cliente_id',
     ];
 
-    // Relacionamento: Uma venda tem muitos itens
+    public function cliente()
+    {
+        return $this->belongsTo(Cliente::class, 'cliente_id');
+    }
+
     public function itens()
     {
         return $this->hasMany(ItemVenda::class, 'sale_id');

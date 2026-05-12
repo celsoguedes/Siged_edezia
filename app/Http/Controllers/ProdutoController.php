@@ -3,28 +3,24 @@
 namespace App\Http\Controllers;
 
 use App\Models\Produto;
-use App\Models\Venda; // Importante para calcular o total de vendas
+use App\Models\Venda;
+use App\Models\Cliente; // Importante: certifique-se que o Model Cliente existe
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Illuminate\Support\Facades\Storage;
 
 class ProdutoController extends Controller
 {
     public function index()
     {
-        // 1. Busca todos os produtos para a listagem
         $produtos = Produto::all();
-
-        // 2. Calcula o total acumulado de todas as vendas realizadas
         $totalVendas = Venda::sum('total_amount');
-
-        // 3. Calcula o total de itens físicos em estoque
         $totalEstoque = Produto::sum('quantidade_estoque');
 
-        // 4. Retorna para a página Index.jsx com todos os dados
         return Inertia::render('Produtos/Index', [
             'produtos' => $produtos,
-            'totalVendas' => number_format($totalVendas, 2, ',', '.'), // Formata para Real R$
+            // CORREÇÃO: Usando 'nome_completo' conforme sua tabela de clientes
+            'clientes' => Cliente::select('id', 'nome_completo', 'nucleo')->orderBy('nome_completo')->get(),
+            'totalVendas' => number_format($totalVendas, 2, ',', '.'),
             'totalEstoque' => $totalEstoque,
         ]);
     }
@@ -48,4 +44,5 @@ class ProdutoController extends Controller
 
         return redirect()->back()->with('success', 'Peça cadastrada com sucesso!');
     }
+
 }
