@@ -14,7 +14,8 @@ class PedidoController extends Controller
     public function index()
     {
         return Inertia::render('Pedidos/Index', [
-            'pedidos' => Pedido::with('cliente')->latest()->get()
+            // ADICIONADO 'itens' para que a soma da Qtd funcione no Index.jsx
+            'pedidos' => Pedido::with(['cliente', 'itens'])->latest()->get()
         ]);
     }
 
@@ -42,29 +43,19 @@ class PedidoController extends Controller
             'tamanho_padrao' => 'nullable|required_if:tipo_ajuste,Padrão|string',
             'quantidade' => 'required|integer|min:1',
             'observacoes_item' => 'nullable|string',
-            'medida_pescoco' => 'nullable',
-            'medida_ombro_ombro' => 'nullable',
-            'medida_punho' => 'nullable',
-            'medida_torax' => 'nullable',
-            'medida_cintura' => 'nullable',
-            'medida_quadril' => 'nullable',
-            'medida_coxa' => 'nullable',
-            'medida_joelho' => 'nullable',
-            'medida_comprimento_total' => 'nullable',
         ]);
 
         $produto = Produto::findOrFail($validated['produto_id']);
+        $valor_total = $produto->preco_base * $validated['quantidade'];
 
         $pedido = Pedido::create([
             'cliente_id' => $validated['cliente_id'],
-            'data_pedido' => now(),
-            'previsao_entrega' => now()->addDays(15),
-            'valor_total' => $produto->preco_base * $validated['quantidade'],
             'status' => 'Pendente',
+            'valor_total' => $valor_total,
+            'data_pedido' => now(),
         ]);
 
-        PedidoItem::create([
-            'pedido_id' => $pedido->id,
+        $pedido->itens()->create([
             'produto_id' => $validated['produto_id'],
             'quantidade' => $validated['quantidade'],
             'preco_unitario' => $produto->preco_base,
@@ -95,14 +86,9 @@ class PedidoController extends Controller
     public function updateStatus(Request $request, Pedido $pedido)
     {
         $validated = $request->validate([
-            'status' => 'required|in:Pendente,Em Produção,Finalizado,Cancelado',
+            'status' => 'required|string'
         ]);
-
-        // Persistência direta no banco de dados[cite: 7, 8]
-        $pedido->update([
-            'status' => $validated['status']
-        ]);
-
-        return back();
+        $pedido->update($validated);
+        return redirect()->back();
     }
 }

@@ -23,6 +23,7 @@ export default function Index({ pedidos }) {
                             <tr>
                                 <th className="px-6 py-4 text-[10px] font-black uppercase text-gray-400">ID</th>
                                 <th className="px-6 py-4 text-[10px] font-black uppercase text-gray-400">Cliente</th>
+                                <th className="px-6 py-4 text-[10px] font-black uppercase text-gray-400 text-center">Qtd</th>
                                 <th className="px-6 py-4 text-[10px] font-black uppercase text-gray-400">Valor Total</th>
                                 <th className="px-6 py-4 text-[10px] font-black uppercase text-gray-400">Status</th>
                                 <th className="px-6 py-4 text-[10px] font-black uppercase text-gray-400">Data</th>
@@ -34,10 +35,17 @@ export default function Index({ pedidos }) {
                                 <tr key={pedido.id} className="hover:bg-gray-50/50 transition">
                                     <td className="px-6 py-4 text-sm font-bold text-gray-400">#{pedido.id}</td>
                                     <td className="px-6 py-4 text-sm font-bold text-gray-800">{pedido.cliente?.nome_completo}</td>
-                                    <td className="px-6 py-4 text-sm font-bold text-gray-600">R$ {pedido.valor_total}</td>
+                                    <td className="px-6 py-4 text-sm font-bold text-indigo-600 text-center">
+                                        {/* Soma as quantidades de todos os itens vinculados */}
+                                        {pedido.itens?.reduce((acc, item) => acc + Number(item.quantidade), 0) || 0} un.
+                                    </td>
+                                    <td className="px-6 py-4 text-sm font-bold text-gray-600">
+                                        R$ {Number(pedido.valor_total).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                    </td>
                                     <td className="px-6 py-4">
                                         <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${
-                                            pedido.status === 'Pendente' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'
+                                            pedido.status === 'Pendente' ? 'bg-yellow-100 text-yellow-700' :
+                                            pedido.status === 'Finalizado' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
                                         }`}>
                                             {pedido.status}
                                         </span>
@@ -46,13 +54,10 @@ export default function Index({ pedidos }) {
                                         {new Date(pedido.created_at).toLocaleDateString('pt-BR')}
                                     </td>
                                     <td className="px-6 py-4">
-                                    <Link
-                                        href={route('pedidos.show', pedido.id)}
-                                        className="text-indigo-600 font-bold text-xs hover:underline"
-                                    >
-        Detalhes
-    </Link>
-</td>
+                                        <Link href={route('pedidos.show', pedido.id)} className="text-indigo-600 font-bold text-xs hover:underline">
+                                            Detalhes
+                                        </Link>
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
