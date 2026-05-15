@@ -36,13 +36,12 @@ Route::middleware('auth')->group(function () {
     Route::resource('clientes', ClienteController::class);
 
     // --- NOVA ROTA: SISTEMA DE PRODUTOS ---
-    // ADICIONE ESTA LINHA ABAIXO:
     Route::resource('produtos', ProdutoController::class);
     Route::resource('pedidos', PedidoController::class);
     Route::patch('/pedidos/{pedido}/status', [PedidoController::class, 'updateStatus'])->name('pedidos.updateStatus');
     Route::post('/vendas', [VendaController::class, 'store'])->name('vendas.store');
     Route::get('/historico-vendas', [VendaController::class, 'index'])->name('vendas.historico');
-    //Route::get('/historico', [VendaController::class, 'index'])->name('vendas.historico');
+
 });
 
 require __DIR__ . '/auth.php';
